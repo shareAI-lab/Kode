@@ -1,3 +1,5 @@
+[![MSeeP.ai Security Assessment Badge](https://mseep.net/pr/shareai-lab-kode-badge.png)](https://mseep.ai/app/shareai-lab-kode)
+
 # Kode - AI Assistant for Your Terminal
 
 [![npm version](https://badge.fury.io/js/@shareai-lab%2Fkode.svg)](https://www.npmjs.com/package/@shareai-lab/kode)
