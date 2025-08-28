@@ -1,6 +1,6 @@
 {
   "name": "@shareai-lab/kode",
-  "version": "1.0.81",
+  "version": "1.0.82",
   "bin": {
     "kode": "cli.js",
     "kwa": "cli.js",
