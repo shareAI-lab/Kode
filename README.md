@@ -6,6 +6,9 @@
 
 [中文文档](README.zh-CN.md) | [Contributing](CONTRIBUTING.md) | [Documentation](docs/)
 
+
+<img width="606" height="303" alt="image" src="https://github.com/user-attachments/assets/6cf50553-aacd-4241-a579-6e935b6c62b5" />
+
 ## 🤝 AGENTS.md Standard Support
 
 **Kode proudly supports the [AGENTS.md standard protocol](https://agents.md) initiated by OpenAI** - a simple, open format for guiding programming agents that's used by 20k+ open source projects.
@@ -26,6 +29,8 @@ Kode is a powerful AI assistant that lives in your terminal. It can understand y
 > **⚠️ Security Notice**: Kode runs in YOLO mode by default (equivalent to Claude's `--dangerously-skip-permissions` flag), bypassing all permission checks for maximum productivity. YOLO mode is recommended only for trusted, secure environments when working on non-critical projects. If you're working with important files or using models of questionable capability, we strongly recommend using `kode --safe` to enable permission checks and manual approval for all operations.
 > 
 > **📊 Model Performance**: For optimal performance, we recommend using newer, more capable models designed for autonomous task completion. Avoid older Q&A-focused models like GPT-4o or Gemini 2.5 Pro, which are optimized for answering questions rather than sustained independent task execution. Choose models specifically trained for agentic workflows and extended reasoning capabilities.
+
+<img width="600" height="577" alt="image" src="https://github.com/user-attachments/assets/8b46a39d-1ab6-4669-9391-14ccc6c5234c" />
 
 ## Features
 
