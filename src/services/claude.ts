@@ -1474,6 +1474,7 @@ async function queryAnthropicNative(
         let usage: any = null
         let stopReason: string | null = null
         let stopSequence: string | null = null
+        let inputJSON: string = ''
 
         for await (const event of stream) {
 
@@ -1502,11 +1503,19 @@ async function queryAnthropicNative(
             if (event.delta.type === 'text_delta') {
               contentBlocks[event.index].text += event.delta.text
             }
+            if (event.delta.type === 'input_json_delta') {
+              inputJSON += event.delta.partial_json
+            }
           } else if (event.type === 'message_delta') {
             if (event.delta.stop_reason) stopReason = event.delta.stop_reason
             if (event.delta.stop_sequence)
               stopSequence = event.delta.stop_sequence
             if (event.usage) usage = { ...usage, ...event.usage }
+          } else if (event.type === 'content_block_stop') {
+            if(contentBlocks[event.index] && contentBlocks[event.index].input) {
+              contentBlocks[event.index].input = JSON.parse(inputJSON)
+              inputJSON = ''
+            }
           } else if (event.type === 'message_stop') {
             break
           }

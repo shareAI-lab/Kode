@@ -567,8 +567,16 @@ async function* checkPermissionsAndCallTool(
   // (surprisingly, the model is not great at generating valid input)
   const isValidInput = tool.inputSchema.safeParse(input)
   if (!isValidInput.success) {
+    // Create a more helpful error message for common cases
+    let errorMessage = `InputValidationError: ${isValidInput.error.message}`
+    
+    // Special handling for the "View" tool (FileReadTool) being called with empty parameters
+    if (tool.name === 'View' && Object.keys(input).length === 0) {
+      errorMessage = `Error: The View tool requires a 'file_path' parameter to specify which file to read. Please provide the absolute path to the file you want to view. For example: {"file_path": "/path/to/file.txt"}`
+    }
+    
     logEvent('tengu_tool_use_error', {
-      error: `InputValidationError: ${isValidInput.error.message}`,
+      error: errorMessage,
       messageID: assistantMessage.message.id,
       toolName: tool.name,
       toolInput: JSON.stringify(input).slice(0, 200),
@@ -576,7 +584,7 @@ async function* checkPermissionsAndCallTool(
     yield createUserMessage([
       {
         type: 'tool_result',
-        content: `InputValidationError: ${isValidInput.error.message}`,
+        content: errorMessage,
         is_error: true,
         tool_use_id: toolUseID,
       },
