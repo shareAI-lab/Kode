@@ -518,7 +518,7 @@ export async function getCompletionWithProfile(
     messageCount: opts.messages?.length || 0,
     streamMode: opts.stream,
     timestamp: new Date().toISOString(),
-    modelProfileName: modelProfile?.modelName,
+    modelProfileModelName: modelProfile?.modelName,
     modelProfileName: modelProfile?.name,
   })
 

@@ -14,7 +14,7 @@ export function TaskProgressMessage({ agentType, status, toolCount }: Props) {
   return (
     <Box flexDirection="column" marginTop={1}>
       <Box flexDirection="row">
-        <Text color={theme.claude}>⎯ </Text>
+        <Text color={theme.kode}>⎯ </Text>
         <Text color={theme.text} bold>
           [{agentType}]
         </Text>

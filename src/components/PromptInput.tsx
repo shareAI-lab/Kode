@@ -596,7 +596,7 @@ function PromptInput({
           mode === 'bash'
             ? theme.bashBorder
             : mode === 'koding'
-              ? theme.koding
+              ? theme.noting
               : theme.secondaryBorder
         }
         borderDimColor
@@ -614,7 +614,7 @@ function PromptInput({
           {mode === 'bash' ? (
             <Text color={theme.bashBorder}>&nbsp;!&nbsp;</Text>
           ) : mode === 'koding' ? (
-            <Text color={theme.koding}>&nbsp;#&nbsp;</Text>
+            <Text color={theme.noting}>&nbsp;#&nbsp;</Text>
           ) : (
             <Text color={isLoading ? theme.secondaryText : undefined}>
               &nbsp;&gt;&nbsp;
@@ -668,7 +668,7 @@ function PromptInput({
                   ! for bash mode
                 </Text>
                 <Text
-                  color={mode === 'koding' ? theme.koding : undefined}
+                  color={mode === 'koding' ? theme.noting : undefined}
                   dimColor={mode !== 'koding'}
                 >
                   · # for AGENTS.md

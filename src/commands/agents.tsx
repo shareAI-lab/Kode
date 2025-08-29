@@ -462,7 +462,16 @@ async function openInEditor(filePath: string): Promise<void> {
   const projectDir = process.cwd()
   const homeDir = os.homedir()
   
-  if (!resolvedPath.startsWith(projectDir) && !resolvedPath.startsWith(homeDir)) {
+  const isSub = (base: string, target: string) => {
+    const path = require('path')
+    const rel = path.relative(path.resolve(base), path.resolve(target))
+    if (!rel || rel === '') return true
+    if (rel.startsWith('..')) return false
+    if (path.isAbsolute(rel)) return false
+    return true
+  }
+
+  if (!isSub(projectDir, resolvedPath) && !isSub(homeDir, resolvedPath)) {
     throw new Error('Access denied: File path outside allowed directories')
   }
   

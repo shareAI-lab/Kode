@@ -263,22 +263,16 @@ export async function startAgentWatcher(onChange?: () => void): Promise<void> {
  * Stop watching agent configuration directories
  */
 export async function stopAgentWatcher(): Promise<void> {
-  const closePromises = watchers.map(watcher => 
-    new Promise<void>((resolve) => {
+  // FSWatcher.close() is synchronous and does not accept a callback on Node 18/20
+  try {
+    for (const watcher of watchers) {
       try {
-        watcher.close((err) => {
-          if (err) {
-            console.error('Failed to close file watcher:', err)
-          }
-          resolve()
-        })
-      } catch (error) {
-        console.error('Error closing watcher:', error)
-        resolve()
+        watcher.close()
+      } catch (err) {
+        console.error('Failed to close file watcher:', err)
       }
-    })
-  )
-  
-  await Promise.allSettled(closePromises)
-  watchers = []
+    }
+  } finally {
+    watchers = []
+  }
 }

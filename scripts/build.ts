@@ -12,8 +12,9 @@ async function build() {
         rmSync(file, { recursive: true, force: true });
       }
     });
+    // No dist artifacts; wrapper-only build
     
-    // Create the CLI wrapper
+    // Create the CLI wrapper (exactly as in the referenced PR)
     const wrapper = `#!/usr/bin/env node
 
 const { spawn } = require('child_process');
@@ -48,34 +49,50 @@ try {
 }
 
 function runWithNode() {
-  // Use local tsx installation
-  const tsxPath = path.join(__dirname, 'node_modules', '.bin', 'tsx');
+  // Use local tsx installation; if missing, try PATH-resolved tsx
+  const binDir = path.join(__dirname, 'node_modules', '.bin')
+  const tsxPath = process.platform === 'win32'
+    ? path.join(binDir, 'tsx.cmd')
+    : path.join(binDir, 'tsx')
+
+  const runPathTsx = () => {
+    const child2 = spawn('tsx', [cliPath, ...args], {
+      stdio: 'inherit',
+      shell: process.platform === 'win32',
+      env: { 
+        ...process.env, 
+        YOGA_WASM_PATH: path.join(__dirname, 'yoga.wasm'),
+        TSX_TSCONFIG_PATH: process.platform === 'win32' ? 'noop' : undefined
+      },
+    })
+    child2.on('error', () => {
+      console.error('\\nError: tsx is required but not found.')
+      console.error('Please install tsx globally: npm install -g tsx')
+      process.exit(1)
+    })
+    child2.on('exit', (code2) => process.exit(code2 || 0))
+  }
+
   const child = spawn(tsxPath, [cliPath, ...args], {
     stdio: 'inherit',
-    env: {
-      ...process.env,
-      YOGA_WASM_PATH: path.join(__dirname, 'yoga.wasm')
-    }
-  });
+    shell: process.platform === 'win32',
+    env: { 
+      ...process.env, 
+      YOGA_WASM_PATH: path.join(__dirname, 'yoga.wasm'),
+      TSX_TSCONFIG_PATH: process.platform === 'win32' ? 'noop' : undefined
+    },
+  })
   
-  child.on('error', (err) => {
-    if (err.code === 'ENOENT') {
-      console.error('\\nError: tsx is required but not found.');
-      console.error('Please run: npm install');
-      process.exit(1);
-    } else {
-      console.error('Failed to start Kode:', err.message);
-      process.exit(1);
-    }
-  });
-  
-  child.on('exit', (code) => process.exit(code || 0));
+  child.on('error', () => runPathTsx())
+  child.on('exit', (code) => {
+    if (code && code !== 0) return runPathTsx()
+    process.exit(code || 0)
+  })
 }
 `;
     
     writeFileSync('cli.js', wrapper);
     chmodSync('cli.js', 0o755);
-    
     // Create .npmrc
     const npmrc = `# Ensure tsx is installed
 auto-install-peers=true

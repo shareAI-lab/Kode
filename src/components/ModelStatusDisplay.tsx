@@ -44,7 +44,7 @@ export function ModelStatusDisplay({ onClose }: Props): React.ReactNode {
                 <Box key={pointer} flexDirection="column" marginBottom={1}>
                   <Text>
                     🎯{' '}
-                    <Text bold color={theme.claude}>
+                    <Text bold color={theme.kode}>
                       {pointer.toUpperCase()}
                     </Text>{' '}
                     → {model.name}
@@ -76,7 +76,7 @@ export function ModelStatusDisplay({ onClose }: Props): React.ReactNode {
                 <Box key={pointer} flexDirection="column" marginBottom={1}>
                   <Text>
                     🎯{' '}
-                    <Text bold color={theme.claude}>
+                    <Text bold color={theme.kode}>
                       {pointer.toUpperCase()}
                     </Text>{' '}
                     → <Text color={theme.error}>❌ Not configured</Text>
@@ -89,7 +89,7 @@ export function ModelStatusDisplay({ onClose }: Props): React.ReactNode {
               <Box key={pointer} flexDirection="column" marginBottom={1}>
                 <Text>
                   🎯{' '}
-                  <Text bold color={theme.claude}>
+                  <Text bold color={theme.kode}>
                     {pointer.toUpperCase()}
                   </Text>{' '}
                   →{' '}

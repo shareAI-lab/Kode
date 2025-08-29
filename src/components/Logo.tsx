@@ -13,9 +13,13 @@ export const MIN_LOGO_WIDTH = 50
 export function Logo({
   mcpClients,
   isDefaultModel = false,
+  updateBannerVersion,
+  updateBannerCommands,
 }: {
   mcpClients: WrappedClient[]
   isDefaultModel?: boolean
+  updateBannerVersion?: string | null
+  updateBannerCommands?: string[] | null
 }): React.ReactNode {
   const width = Math.max(MIN_LOGO_WIDTH, getCwd().length + 12)
   const theme = getTheme()
@@ -35,15 +39,36 @@ export function Logo({
   return (
     <Box flexDirection="column">
       <Box
-        borderColor={theme.claude}
+        borderColor={theme.kode}
         borderStyle="round"
         flexDirection="column"
         gap={1}
         paddingLeft={1}
+        marginRight={2}
         width={width}
       >
+        {updateBannerVersion ? (
+          <Box flexDirection="column">
+            <Text color="yellow">New version available: {updateBannerVersion}</Text>
+            <Text>Run the following command to update:</Text>
+            <Text>
+              {'  '}
+              {updateBannerCommands?.[0] ?? 'bun add -g @shareai-lab/kode@latest'}
+            </Text>
+            <Text>Or:</Text>
+            <Text>
+              {'  '}
+              {updateBannerCommands?.[1] ?? 'npm install -g @shareai-lab/kode@latest'}
+            </Text>
+            {process.platform !== 'win32' && (
+              <Text dimColor>
+                Note: you may need to prefix with "sudo" on macOS/Linux.
+              </Text>
+            )}
+          </Box>
+        ) : null}
         <Text>
-          <Text color={theme.claude}>✻</Text> Welcome to{' '}
+          <Text color={theme.kode}>✻</Text> Welcome to{' '}
           <Text bold>{PRODUCT_NAME}</Text> <Text>research preview!</Text>
         </Text>
         {/* <AsciiLogo /> */}

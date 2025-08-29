@@ -20,7 +20,7 @@ export function UserKodingInputMessage({
   return (
     <Box flexDirection="column" marginTop={addMargin ? 1 : 0} width="100%">
       <Box>
-        <Text color={getTheme().koding}>#</Text>
+        <Text color={getTheme().noting}>#</Text>
         <Text color={getTheme().secondaryText}> {input}</Text>
       </Box>
     </Box>

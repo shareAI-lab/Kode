@@ -1,4 +1,4 @@
-import { isAbsolute, resolve } from 'path'
+import { isAbsolute, resolve, relative, sep } from 'path'
 import { getCwd, getOriginalCwd } from '../state'
 
 // In-memory storage for file permissions that resets each session
@@ -12,7 +12,26 @@ const writeFileAllowedDirectories: Set<string> = new Set()
  * @returns Absolute path
  */
 export function toAbsolutePath(path: string): string {
-  return isAbsolute(path) ? resolve(path) : resolve(getCwd(), path)
+  const abs = isAbsolute(path) ? resolve(path) : resolve(getCwd(), path)
+  return normalizeForCompare(abs)
+}
+
+function normalizeForCompare(p: string): string {
+  // Normalize separators and resolve .. and . segments
+  const norm = resolve(p)
+  // On Windows, comparisons should be case-insensitive
+  return process.platform === 'win32' ? norm.toLowerCase() : norm
+}
+
+function isSubpath(base: string, target: string): boolean {
+  const rel = relative(base, target)
+  // If different drive letters on Windows, relative returns the target path
+  if (!rel || rel === '') return true
+  // Not a subpath if it goes up to parent
+  if (rel.startsWith('..')) return false
+  // Not a subpath if absolute
+  if (isAbsolute(rel)) return false
+  return true
 }
 
 /**
@@ -22,7 +41,8 @@ export function toAbsolutePath(path: string): string {
  */
 export function pathInOriginalCwd(path: string): boolean {
   const absolutePath = toAbsolutePath(path)
-  return absolutePath.startsWith(toAbsolutePath(getOriginalCwd()))
+  const base = toAbsolutePath(getOriginalCwd())
+  return isSubpath(base, absolutePath)
 }
 
 /**
@@ -32,12 +52,8 @@ export function pathInOriginalCwd(path: string): boolean {
  */
 export function hasReadPermission(directory: string): boolean {
   const absolutePath = toAbsolutePath(directory)
-
   for (const allowedPath of readFileAllowedDirectories) {
-    // Permission exists for this directory or a path prefix
-    if (absolutePath.startsWith(allowedPath)) {
-      return true
-    }
+    if (isSubpath(allowedPath, absolutePath)) return true
   }
   return false
 }
@@ -49,12 +65,8 @@ export function hasReadPermission(directory: string): boolean {
  */
 export function hasWritePermission(directory: string): boolean {
   const absolutePath = toAbsolutePath(directory)
-
   for (const allowedPath of writeFileAllowedDirectories) {
-    // Permission exists for this directory or a path prefix
-    if (absolutePath.startsWith(allowedPath)) {
-      return true
-    }
+    if (isSubpath(allowedPath, absolutePath)) return true
   }
   return false
 }
@@ -65,10 +77,9 @@ export function hasWritePermission(directory: string): boolean {
  */
 function saveReadPermission(directory: string): void {
   const absolutePath = toAbsolutePath(directory)
-
-  // Clean up any existing subdirectories of this path
-  for (const allowedPath of readFileAllowedDirectories) {
-    if (allowedPath.startsWith(absolutePath)) {
+  // Remove any existing subpaths contained by this new path
+  for (const allowedPath of Array.from(readFileAllowedDirectories)) {
+    if (isSubpath(absolutePath, allowedPath)) {
       readFileAllowedDirectories.delete(allowedPath)
     }
   }
@@ -92,10 +103,8 @@ export function grantReadPermissionForOriginalDir(): void {
  */
 function saveWritePermission(directory: string): void {
   const absolutePath = toAbsolutePath(directory)
-
-  // Clean up any existing subdirectories of this path
-  for (const allowedPath of writeFileAllowedDirectories) {
-    if (allowedPath.startsWith(absolutePath)) {
+  for (const allowedPath of Array.from(writeFileAllowedDirectories)) {
+    if (isSubpath(absolutePath, allowedPath)) {
       writeFileAllowedDirectories.delete(allowedPath)
     }
   }

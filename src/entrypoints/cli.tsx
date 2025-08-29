@@ -1,7 +1,24 @@
 #!/usr/bin/env -S node --no-warnings=ExperimentalWarning --enable-source-maps
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
 import { initSentry } from '../services/sentry'
 import { PRODUCT_COMMAND, PRODUCT_NAME } from '../constants/product'
 initSentry() // Initialize Sentry as early as possible
+
+// Ensure YOGA_WASM_PATH is set for Ink across run modes (wrapper/dev)
+// Resolve yoga.wasm relative to this file when missing using ESM-friendly APIs
+try {
+  if (!process.env.YOGA_WASM_PATH) {
+    const { existsSync: fsExistsSync } = require('fs')
+    const __filename = fileURLToPath(import.meta.url)
+    const __dirname = dirname(__filename)
+    const devCandidate = join(__dirname, '../../yoga.wasm')
+    // Prefer dev path; wrapper already sets env for normal runs
+    process.env.YOGA_WASM_PATH = fsExistsSync(devCandidate)
+      ? devCandidate
+      : process.env.YOGA_WASM_PATH
+  }
+} catch {}
 
 // XXX: Without this line (and the Object.keys, even though it seems like it does nothing!),
 // there is a bug in Bun only on Win32 that causes this import to be removed, even though
@@ -74,8 +91,11 @@ import {
   getLatestVersion,
   installGlobalPackage,
   assertMinVersion,
+  getUpdateCommandSuggestions,
 } from '../utils/autoUpdater'
+import { gt } from 'semver'
 import { CACHE_PATHS } from '../utils/log'
+// import { checkAndNotifyUpdate } from '../utils/autoUpdater'
 import { PersistentShell } from '../utils/PersistentShell'
 import { GATE_USE_EXTERNAL_UPDATER } from '../constants/betas'
 import { clearTerminal } from '../utils/terminal'
@@ -290,6 +310,8 @@ async function main() {
     }
   }
 
+  // Disabled background notifier to avoid mid-screen logs during REPL
+
   let inputPrompt = ''
   let renderContext: RenderOptions | undefined = {
     exitOnCtrlC: false,
@@ -417,6 +439,18 @@ ${commandList}`,
         } else {
           const isDefaultModel = await isDefaultSlowAndCapableModel()
 
+          // Prefetch update info before first render to place banner at top
+          const updateInfo = await (async () => {
+            try {
+              const latest = await getLatestVersion()
+              if (latest && gt(latest, MACRO.VERSION)) {
+                const cmds = await getUpdateCommandSuggestions()
+                return { version: latest as string, commands: cmds as string[] }
+              }
+            } catch {}
+            return { version: null as string | null, commands: null as string[] | null }
+          })()
+
           render(
             <REPL
               commands={commands}
@@ -429,6 +463,8 @@ ${commandList}`,
               safeMode={safe}
               mcpClients={mcpClients}
               isDefaultModel={isDefaultModel}
+              initialUpdateVersion={updateInfo.version}
+              initialUpdateCommands={updateInfo.commands}
             />,
             renderContext,
           )
@@ -1098,11 +1134,11 @@ ${commandList}`,
                 <Box
                   flexDirection="column"
                   borderStyle="round"
-                  borderColor={theme.claude}
+                borderColor={theme.kode}
                   padding={1}
                   width={'100%'}
                 >
-                  <Text bold color={theme.claude}>
+                  <Text bold color={theme.kode}>
                     Import MCP Servers from Claude Desktop
                   </Text>
 
@@ -1219,16 +1255,8 @@ ${commandList}`,
   // claude update
   program
     .command('update')
-    .description('Check for updates and install if available')
+    .description('Show manual upgrade commands (no auto-install)')
     .action(async () => {
-      const useExternalUpdater = await checkGate(GATE_USE_EXTERNAL_UPDATER)
-      if (useExternalUpdater) {
-        // The external updater intercepts calls to "claude update", which means if we have received
-        // this command at all, the extenral updater isn't installed on this machine.
-        console.log(`This version of ${PRODUCT_NAME} is no longer supported.`)
-        process.exit(0)
-      }
-
       logEvent('tengu_update_check', {})
       console.log(`Current version: ${MACRO.VERSION}`)
       console.log('Checking for updates...')
@@ -1246,30 +1274,12 @@ ${commandList}`,
       }
 
       console.log(`New version available: ${latestVersion}`)
-      console.log('Installing update...')
-
-      const status = await installGlobalPackage()
-
-      switch (status) {
-        case 'success':
-          console.log(`Successfully updated to version ${latestVersion}`)
-          break
-        case 'no_permissions':
-          console.error('Error: Insufficient permissions to install update')
-          console.error('Try running with sudo or fix npm permissions')
-          process.exit(1)
-          break
-        case 'install_failed':
-          console.error('Error: Failed to install update')
-          process.exit(1)
-          break
-        case 'in_progress':
-          console.error(
-            'Error: Another instance is currently performing an update',
-          )
-          console.error('Please wait and try again later')
-          process.exit(1)
-          break
+      const { getUpdateCommandSuggestions } = await import('../utils/autoUpdater')
+      const cmds = await getUpdateCommandSuggestions()
+      console.log('\nRun one of the following commands to update:')
+      for (const c of cmds) console.log(`  ${c}`)
+      if (process.platform !== 'win32') {
+        console.log('\nNote: you may need to prefix with "sudo" on macOS/Linux.')
       }
       process.exit(0)
     })
@@ -1501,9 +1511,23 @@ process.on('exit', () => {
   PersistentShell.getInstance().close()
 })
 
-process.on('SIGINT', () => {
-  console.log('SIGINT')
-  process.exit(0)
+function gracefulExit(code = 0) {
+  try { resetCursor() } catch {}
+  try { PersistentShell.getInstance().close() } catch {}
+  process.exit(code)
+}
+
+process.on('SIGINT', () => gracefulExit(0))
+process.on('SIGTERM', () => gracefulExit(0))
+// Windows CTRL+BREAK
+process.on('SIGBREAK', () => gracefulExit(0))
+process.on('unhandledRejection', err => {
+  console.error('Unhandled rejection:', err)
+  gracefulExit(1)
+})
+process.on('uncaughtException', err => {
+  console.error('Uncaught exception:', err)
+  gracefulExit(1)
 })
 
 function resetCursor() {

@@ -107,7 +107,8 @@ export function logEvent(
 }
 
 export const checkGate = memoize(async (gateName: string): Promise<boolean> => {
-  return true
+  // Default to disabled gates when Statsig is not active
+  return false
   // if (env.isCI || process.env.NODE_ENV === 'test') {
   //   return false
   // }
@@ -120,7 +121,7 @@ export const checkGate = memoize(async (gateName: string): Promise<boolean> => {
 })
 
 export const useStatsigGate = (gateName: string, defaultValue = false) => {
-  return true
+  return false
   // const [gateValue, setGateValue] = React.useState(defaultValue)
   // React.useEffect(() => {
   //   checkGate(gateName).then(setGateValue)

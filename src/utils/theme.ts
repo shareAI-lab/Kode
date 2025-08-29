@@ -2,18 +2,16 @@ import { getGlobalConfig } from './config'
 
 export interface Theme {
   bashBorder: string
-  claude: string
-  koding: string
+  kode: string
+  noting: string
   permission: string
   secondaryBorder: string
   text: string
   secondaryText: string
   suggestion: string
-  // Semantic colors
   success: string
   error: string
   warning: string
-  // UI colors
   primary: string
   secondary: string
   diff: {
@@ -25,9 +23,9 @@ export interface Theme {
 }
 
 const lightTheme: Theme = {
-  bashBorder: '#ff0087',
-  claude: '#7aff59ff',
-  koding: '#9dff00ff',
+  bashBorder: '#FF6E57',
+  kode: '#FFC233',
+  noting: '#222222',
   permission: '#e9c61aff',
   secondaryBorder: '#999',
   text: '#000',
@@ -47,31 +45,31 @@ const lightTheme: Theme = {
 }
 
 const lightDaltonizedTheme: Theme = {
-  bashBorder: '#0066cc', // Blue instead of pink for better contrast
-  claude: '#5f97cd', // Orange adjusted for deuteranopia
-  koding: '#0000ff',
-  permission: '#3366ff', // Brighter blue for better visibility
+  bashBorder: '#FF6E57',
+  kode: '#FFC233',
+  noting: '#222222',
+  permission: '#3366ff',
   secondaryBorder: '#999',
   text: '#000',
   secondaryText: '#666',
   suggestion: '#3366ff',
-  success: '#006699', // Blue instead of green
-  error: '#cc0000', // Pure red for better distinction
-  warning: '#ff9900', // Orange adjusted for deuteranopia
+  success: '#006699',
+  error: '#cc0000',
+  warning: '#ff9900',
   primary: '#000',
   secondary: '#666',
   diff: {
-    added: '#99ccff', // Light blue instead of green
-    removed: '#ffcccc', // Light red for better contrast
+    added: '#99ccff',
+    removed: '#ffcccc',
     addedDimmed: '#d1e7fd',
     removedDimmed: '#ffe9e9',
   },
 }
 
 const darkTheme: Theme = {
-  bashBorder: '#fd5db1',
-  claude: '#5f97cd',
-  koding: '#0000ff',
+  bashBorder: '#FF6E57',
+  kode: '#FFC233',
+  noting: '#222222',
   permission: '#b1b9f9',
   secondaryBorder: '#888',
   text: '#fff',
@@ -91,32 +89,28 @@ const darkTheme: Theme = {
 }
 
 const darkDaltonizedTheme: Theme = {
-  bashBorder: '#3399ff', // Bright blue instead of pink
-  claude: '#5f97cd', // Orange adjusted for deuteranopia
-  koding: '#0000ff',
-  permission: '#99ccff', // Light blue for better contrast
+  bashBorder: '#FF6E57',
+  kode: '#FFC233',
+  noting: '#222222',
+  permission: '#99ccff',
   secondaryBorder: '#888',
   text: '#fff',
   secondaryText: '#999',
   suggestion: '#99ccff',
-  success: '#3399ff', // Bright blue instead of green
-  error: '#ff6666', // Bright red for better visibility
-  warning: '#ffcc00', // Yellow-orange for deuteranopia
+  success: '#3399ff',
+  error: '#ff6666',
+  warning: '#ffcc00',
   primary: '#fff',
   secondary: '#999',
   diff: {
-    added: '#004466', // Dark blue instead of green
-    removed: '#660000', // Dark red for better contrast
+    added: '#004466',
+    removed: '#660000',
     addedDimmed: '#3e515b',
     removedDimmed: '#3e2c2c',
   },
 }
 
-export type ThemeNames =
-  | 'dark'
-  | 'light'
-  | 'light-daltonized'
-  | 'dark-daltonized'
+export type ThemeNames = 'dark' | 'light' | 'light-daltonized' | 'dark-daltonized'
 
 export function getTheme(overrideTheme?: ThemeNames): Theme {
   const config = getGlobalConfig()

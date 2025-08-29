@@ -173,6 +173,8 @@ export type GlobalConfig = {
   modelProfiles?: ModelProfile[] // Model configuration list
   modelPointers?: ModelPointers // Model pointer system
   defaultModelName?: string // Default model
+  // Update notifications
+  lastDismissedUpdateVersion?: string
 }
 
 export const DEFAULT_GLOBAL_CONFIG: GlobalConfig = {
@@ -196,6 +198,7 @@ export const DEFAULT_GLOBAL_CONFIG: GlobalConfig = {
     reasoning: '',
     quick: '',
   },
+  lastDismissedUpdateVersion: undefined,
 }
 
 export const GLOBAL_CONFIG_KEYS = [

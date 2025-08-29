@@ -98,12 +98,15 @@ export function isInDirectory(
     : normalizedCwd + sep
 
   // Join with a base directory to make them absolute-like for comparison
-  // Using 'dummy' as base to avoid any actual file system dependencies
   const fullPath = resolvePath(cwd(), normalizedCwd, normalizedPath)
   const fullCwd = resolvePath(cwd(), normalizedCwd)
 
-  // Check if the path starts with the cwd
-  return fullPath.startsWith(fullCwd)
+  // Robust subpath check using path.relative (case-insensitive on Windows)
+  const rel = relative(fullCwd, fullPath)
+  if (!rel || rel === '') return true
+  if (rel.startsWith('..')) return false
+  if (isAbsolute(rel)) return false
+  return true
 }
 
 export function readTextContent(

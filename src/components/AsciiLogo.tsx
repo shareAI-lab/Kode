@@ -7,7 +7,7 @@ export function AsciiLogo(): React.ReactNode {
   const theme = getTheme()
   return (
     <Box flexDirection="column" alignItems="flex-start">
-      <Text color={theme.claude}>{ASCII_LOGO}</Text>
+      <Text color={theme.kode}>{ASCII_LOGO}</Text>
     </Box>
   )
 }

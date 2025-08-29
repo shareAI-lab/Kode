@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync, statSync, unlinkSync, renameSync } from 'node:fs'
-import { join, dirname, normalize, resolve, extname } from 'node:path'
+import { join, dirname, normalize, resolve, extname, relative, isAbsolute } from 'node:path'
 import { homedir } from 'node:os'
 
 /**
@@ -98,7 +98,12 @@ export class SecureFileService {
       
       // 检查是否在允许的基础路径中
       const isInAllowedPath = Array.from(this.allowedBasePaths).some(basePath => {
-        return absolutePath.startsWith(basePath)
+        const base = resolve(basePath)
+        const rel = relative(base, absolutePath)
+        if (!rel || rel === '') return true
+        if (rel.startsWith('..')) return false
+        if (isAbsolute(rel)) return false
+        return true
       })
 
       if (!isInAllowedPath) {

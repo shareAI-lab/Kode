@@ -44,6 +44,7 @@ import type { WrappedClient } from '../services/mcpClient'
 import type { Tool } from '../Tool'
 import { AutoUpdaterResult } from '../utils/autoUpdater'
 import { getGlobalConfig, saveGlobalConfig } from '../utils/config'
+import { MACRO } from '../constants/macros'
 import { logEvent } from '../services/statsig'
 import { getNextAvailableLogForkNumber } from '../utils/log'
 import {
@@ -87,6 +88,9 @@ type Props = {
   mcpClients?: WrappedClient[]
   // Flag to indicate if current model is default
   isDefaultModel?: boolean
+  // Update banner info passed from CLI before first render
+  initialUpdateVersion?: string | null
+  initialUpdateCommands?: string[] | null
 }
 
 export type BinaryFeedbackContext = {
@@ -108,6 +112,8 @@ export function REPL({
   initialMessages,
   mcpClients = [],
   isDefaultModel = true,
+  initialUpdateVersion,
+  initialUpdateCommands,
 }: Props): React.ReactNode {
   // TODO: probably shouldn't re-read config from file synchronously on every keystroke
   const verbose = verboseFromCLI ?? getGlobalConfig().verbose
@@ -149,6 +155,10 @@ export function REPL({
 
   const [binaryFeedbackContext, setBinaryFeedbackContext] =
     useState<BinaryFeedbackContext | null>(null)
+  // New version banner: passed in from CLI to guarantee top placement
+  const updateAvailableVersion = initialUpdateVersion ?? null
+  const updateCommands = initialUpdateCommands ?? null
+  // No separate Static for banner; it renders inside Logo
 
   const getBinaryFeedbackResponse = useCallback(
     (
@@ -208,6 +218,8 @@ export function REPL({
       setShowCostDialog(true)
     }
   }, [messages, showCostDialog, haveShownCostDialog])
+
+  // Update banner is provided by CLI at startup; no async check here.
 
   const canUseTool = useCanUseTool(setToolUseConfirm)
 
@@ -478,7 +490,12 @@ export function REPL({
         type: 'static',
         jsx: (
           <Box flexDirection="column" key={`logo${forkNumber}`}>
-            <Logo mcpClients={mcpClients} isDefaultModel={isDefaultModel} />
+            <Logo
+              mcpClients={mcpClients}
+              isDefaultModel={isDefaultModel}
+              updateBannerVersion={updateAvailableVersion}
+              updateBannerCommands={updateCommands}
+            />
             <ProjectOnboarding workspaceDir={getOriginalCwd()} />
           </Box>
         ),
@@ -602,6 +619,7 @@ export function REPL({
 
   return (
     <PermissionProvider isBypassPermissionsModeAvailable={!safeMode}>
+      {/* Update banner now renders inside Logo for stable placement */}
       <ModeIndicator />
       <React.Fragment key={`static-messages-${forkNumber}`}>
         <Static

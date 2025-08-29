@@ -66,7 +66,7 @@ export function Help({
 
   return (
     <Box flexDirection="column" padding={1}>
-      <Text bold color={theme.claude}>
+      <Text bold color={theme.kode}>
         {`${PRODUCT_NAME} v${MACRO.VERSION}`}
       </Text>
 
@@ -150,7 +150,7 @@ export function Help({
               <Box flexDirection="column">
                 {customCommands.map((cmd, i) => (
                   <Box key={i} marginLeft={1}>
-                    <Text bold color={theme.claude}>{`/${cmd.name}`}</Text>
+                    <Text bold color={theme.kode}>{`/${cmd.name}`}</Text>
                     <Text> - {cmd.description}</Text>
                     {cmd.aliases && cmd.aliases.length > 0 && (
                       <Text color={theme.secondaryText}>

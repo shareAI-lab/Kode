@@ -96,9 +96,9 @@ export function Spinner(): React.ReactNode {
   return (
     <Box flexDirection="row" marginTop={1}>
       <Box flexWrap="nowrap" height={1} width={2}>
-        <Text color={getTheme().claude}>{frames[frame]}</Text>
+        <Text color={getTheme().kode}>{frames[frame]}</Text>
       </Box>
-      <Text color={getTheme().claude}>{message.current}… </Text>
+      <Text color={getTheme().kode}>{message.current}… </Text>
       <Text color={getTheme().secondaryText}>
         ({elapsedTime}s · <Text bold>esc</Text> to interrupt)
       </Text>
@@ -123,7 +123,7 @@ export function SimpleSpinner(): React.ReactNode {
 
   return (
     <Box flexWrap="nowrap" height={1} width={2}>
-      <Text color={getTheme().claude}>{frames[frame]}</Text>
+      <Text color={getTheme().kode}>{frames[frame]}</Text>
     </Box>
   )
 }
