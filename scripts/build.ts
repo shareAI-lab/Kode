@@ -12,43 +12,68 @@ async function build() {
         rmSync(file, { recursive: true, force: true });
       }
     });
-    // No dist artifacts; wrapper-only build
+    // Ensure dist folder exists
+    if (!existsSync('dist')) {
+      // @ts-ignore
+      await import('node:fs/promises').then(m => m.mkdir('dist', { recursive: true }))
+    }
     
-    // Create the CLI wrapper (exactly as in the referenced PR)
+    // Create the CLI wrapper (prefer dist when available, then bun, then node+tsx)
     const wrapper = `#!/usr/bin/env node
 
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
-// Prefer bun if available, otherwise use node with loader
+// Prefer dist (pure Node) if available, otherwise try bun, then node+tsx
 const args = process.argv.slice(2);
 const cliPath = path.join(__dirname, 'src', 'entrypoints', 'cli.tsx');
+const distEntrypoint = path.join(__dirname, 'dist', 'entrypoints', 'cli.js');
 
-// Try bun first
+// 1) Run compiled dist with Node if present (Windows-friendly, no bun/tsx needed)
 try {
-  const { execSync } = require('child_process');
-  execSync('bun --version', { stdio: 'ignore' });
-  
-  // Bun is available
-  const child = spawn('bun', ['run', cliPath, ...args], {
-    stdio: 'inherit',
-    env: {
-      ...process.env,
-      YOGA_WASM_PATH: path.join(__dirname, 'yoga.wasm')
-    }
-  });
-  
-  child.on('exit', (code) => process.exit(code || 0));
-  child.on('error', () => {
-    // Fallback to node if bun fails
-    runWithNode();
-  });
-} catch {
-  // Bun not available, use node
-  runWithNode();
+  if (fs.existsSync(distEntrypoint)) {
+    const child = spawn(process.execPath, [distEntrypoint, ...args], {
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        YOGA_WASM_PATH: path.join(__dirname, 'yoga.wasm'),
+      },
+    });
+    child.on('exit', code => process.exit(code || 0));
+    child.on('error', () => runWithBunOrTsx());
+    return;
+  }
+} catch (_) {
+  // fallthrough to bun/tsx
 }
 
-function runWithNode() {
+// 2) Otherwise, try bun first, then fall back to node+tsx
+runWithBunOrTsx();
+
+function runWithBunOrTsx() {
+  // Try bun first
+  try {
+    const { execSync } = require('child_process');
+    execSync('bun --version', { stdio: 'ignore' });
+    const child = spawn('bun', ['run', cliPath, ...args], {
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        YOGA_WASM_PATH: path.join(__dirname, 'yoga.wasm'),
+      },
+    });
+    child.on('exit', code => process.exit(code || 0));
+    child.on('error', () => runWithNodeTsx());
+    return;
+  } catch {
+    // ignore and try tsx path
+  }
+
+  runWithNodeTsx();
+}
+
+function runWithNodeTsx() {
   // Use local tsx installation; if missing, try PATH-resolved tsx
   const binDir = path.join(__dirname, 'node_modules', '.bin')
   const tsxPath = process.platform === 'win32'
@@ -93,6 +118,13 @@ function runWithNode() {
     
     writeFileSync('cli.js', wrapper);
     chmodSync('cli.js', 0o755);
+
+    // Create a slim dist/index.js that imports the real entrypoint
+    const distIndex = `#!/usr/bin/env node
+import './entrypoints/cli.js';
+`;
+    writeFileSync('dist/index.js', distIndex);
+    chmodSync('dist/index.js', 0o755);
     // Create .npmrc
     const npmrc = `# Ensure tsx is installed
 auto-install-peers=true

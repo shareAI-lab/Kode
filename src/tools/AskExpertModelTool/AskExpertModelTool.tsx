@@ -146,7 +146,7 @@ Question: What are the most effective React optimization techniques for handling
       }
     } catch (e) {
       // If we can't determine current model, allow the request
-      debugLogger('AskExpertModel', 'Could not determine current model:', e)
+      debugLogger.error('AskExpertModel', { message: 'Could not determine current model', error: e })
     }
 
     // Validate that the model exists and is available
@@ -169,7 +169,8 @@ Question: What are the most effective React optimization techniques for handling
         }
       }
     } catch (error) {
-      logError('Model validation error in AskExpertModelTool', error)
+      console.error('Model validation error in AskExpertModelTool:', error)
+      logError(error)
       return {
         result: false,
         message: `Failed to validate expert model '${expert_model}'. Please check your model configuration.`,
@@ -303,7 +304,8 @@ ${output.expertAnswer}`
           const session = createExpertChatSession(expertModel)
           sessionId = session.sessionId
         } catch (error) {
-          logError('Failed to create new expert chat session', error)
+          console.error('Failed to create new expert chat session:', error)
+          logError(error)
           throw new Error('Failed to create new chat session')
         }
       } else {
@@ -316,16 +318,15 @@ ${output.expertAnswer}`
             sessionId = newSession.sessionId
           }
         } catch (error) {
-          logError('Failed to load expert chat session', error)
+          console.error('Failed to load expert chat session:', error)
+          logError(error)
           // Fallback: create new session
           try {
             const newSession = createExpertChatSession(expertModel)
             sessionId = newSession.sessionId
           } catch (createError) {
-            logError(
-              'Failed to create fallback expert chat session',
-              createError,
-            )
+            console.error('Failed to create fallback expert chat session:', createError)
+            logError(createError)
             throw new Error('Unable to create or load chat session')
           }
         }
@@ -341,7 +342,8 @@ ${output.expertAnswer}`
       try {
         historyMessages = getSessionMessages(sessionId)
       } catch (error) {
-        logError('Failed to load session messages', error)
+        console.error('Failed to load session messages:', error)
+        logError(error)
         historyMessages = [] // Fallback to empty history
       }
 
@@ -355,7 +357,8 @@ ${output.expertAnswer}`
             : createAssistantMessage(msg.content),
         )
       } catch (error) {
-        logError('Failed to create system messages', error)
+        console.error('Failed to create system messages:', error)
+        logError(error)
         throw new Error('Failed to prepare conversation messages')
       }
 
@@ -414,7 +417,8 @@ ${output.expertAnswer}`
           timeoutPromise
         ])
       } catch (error: any) {
-        logError('Expert model query failed', error)
+        console.error('Expert model query failed:', error)
+        logError(error)
 
         // Check for specific error types
         if (
@@ -496,7 +500,8 @@ ${output.expertAnswer}`
           throw new Error('Expert response was empty')
         }
       } catch (error) {
-        logError('Failed to extract expert answer', error)
+        console.error('Failed to extract expert answer:', error)
+        logError(error)
         throw new Error('Failed to process expert response')
       }
 
@@ -505,7 +510,8 @@ ${output.expertAnswer}`
         addMessageToSession(sessionId, 'user', question)
         addMessageToSession(sessionId, 'assistant', expertAnswer)
       } catch (error) {
-        logError('Failed to save conversation to session', error)
+        console.error('Failed to save conversation to session:', error)
+        logError(error)
         // Don't throw here - we got a valid response, saving is non-critical
       }
 
@@ -530,7 +536,8 @@ ${output.expertAnswer}`
         return yield* this.handleInterrupt()
       }
 
-      logError('AskExpertModelTool execution failed', error)
+      console.error('AskExpertModelTool execution failed:', error)
+      logError(error)
 
       // Ensure we have a valid sessionId for error response
       const errorSessionId = sessionId || 'error-session'

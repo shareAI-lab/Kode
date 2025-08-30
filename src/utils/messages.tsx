@@ -298,7 +298,6 @@ export async function processUserInput(
       newMessages[0]!.type === 'user' &&
       newMessages[1]!.type === 'assistant' &&
       typeof newMessages[1]!.message.content === 'string' &&
-      // @ts-expect-error: TODO: this is probably a bug
       newMessages[1]!.message.content.startsWith('Unknown command:')
     ) {
       logEvent('tengu_input_slash_invalid', { input })
@@ -436,7 +435,14 @@ async function getMessagesForSlashCommand(
 
         try {
           // Use the context's abortController for local commands
-          const result = await command.call(args, context)
+          const result = await command.call(args, {
+            ...context,
+            options: {
+              commands: context.options.commands || [],
+              tools: context.options.tools || [],
+              slowAndCapableModel: context.options.slowAndCapableModel || 'main'
+            }
+          })
 
           return [
             userMessage,

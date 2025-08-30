@@ -1,15 +1,15 @@
 {
   "name": "@shareai-lab/kode",
-  "version": "1.1.12",
+  "version": "1.1.14",
   "bin": {
-    "kode": "cli.js",
-    "kwa": "cli.js",
-    "kd": "cli.js"
+    "kode": "dist/index.js",
+    "kwa": "dist/index.js",
+    "kd": "dist/index.js"
   },
   "engines": {
     "node": ">=20.18.1"
   },
-  "main": "cli.js",
+  "main": "dist/index.js",
   "author": "ShareAI-lab <ai-lab@foxmail.com>",
   "license": "Apache-2.0",
   "description": "AI-powered terminal assistant that understands your codebase, edits files, runs commands, and automates development workflows.",
@@ -24,20 +24,24 @@
   "files": [
     "cli.js",
     "yoga.wasm",
+    "dist/**/*",
     "src/**/*",
     "scripts/postinstall.js",
     ".npmrc"
   ],
   "scripts": {
     "dev": "bun run ./src/entrypoints/cli.tsx --verbose",
-    "build": "bun run scripts/build.ts",
+    "build": "node scripts/build.mjs",
     "clean": "rm -rf cli.js",
     "prepublishOnly": "bun run build && node scripts/prepublish-check.js",
     "postinstall": "node scripts/postinstall.js || true",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json}\"",
+    "lint": "eslint . --ext .ts,.tsx,.js --max-warnings 0",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js --fix",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky install"
   },
   "optionalDependencies": {
     "@img/sharp-darwin-arm64": "^0.33.5",
@@ -81,6 +85,7 @@
     "openai": "^4.104.0",
     "react": "^19.1.1",
     "semver": "^7.7.2",
+    "sharp": "^0.34.3",
     "shell-quote": "^1.8.3",
     "spawn-rx": "^5.1.2",
     "tsx": "^4.20.3",
@@ -94,9 +99,25 @@
     "@types/bun": "latest",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.4.0",
+    "@typescript-eslint/parser": "^8.4.0",
+    "esbuild": "^0.23.0",
+    "eslint": "^9.9.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.36.1",
+    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.9",
+    "@types/sharp": "^0.32.0",
     "bun-types": "latest",
     "prettier": "^3.6.2",
     "typescript": "^5.9.2"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   },
   "overrides": {
     "string-width": "^7.2.0",

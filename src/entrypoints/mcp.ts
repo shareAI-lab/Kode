@@ -67,7 +67,7 @@ export async function startMCPServer(cwd: string): Promise<void> {
       const tools = await Promise.all(
         MCP_TOOLS.map(async tool => ({
           ...tool,
-          description: await tool.description(z.object({})),
+          description: await tool.description(),
           inputSchema: zodToJsonSchema(tool.inputSchema) as ToolInput,
         })),
       )
@@ -127,7 +127,6 @@ export async function startMCPServer(cwd: string): Promise<void> {
             },
             readFileTimestamps: state.readFileTimestamps,
           },
-          hasPermissionsToUseTool,
         )
 
         const finalResult = await lastX(result)

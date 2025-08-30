@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { Box, Text, useInput } from 'ink'
 import { Select } from '../components/CustomSelect/select'
 import { getTheme } from '../utils/theme'
-import { ConfigureNpmPrefix } from './ConfigureNpmPrefix.tsx'
+import { ConfigureNpmPrefix } from './ConfigureNpmPrefix'
 import { platform } from 'process'
 import {
   checkNpmPermissions,

@@ -112,7 +112,7 @@ export async function getReasoningEffort(
     // 🔧 Fix: Use ModelManager fallback instead of legacy config
     const modelManager = getModelManager()
     const fallbackProfile = modelManager.getModel('main')
-    reasoningEffort = fallbackProfile?.reasoningEffort || 'medium'
+    reasoningEffort = (fallbackProfile?.reasoningEffort === 'minimal' ? 'low' : fallbackProfile?.reasoningEffort) || 'medium'
   }
 
   const maxEffort =

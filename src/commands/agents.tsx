@@ -2354,7 +2354,9 @@ function ConfirmStep({ createState, setCreateState, setModeState, tools, onAgent
             <Box marginTop={1}>
               <Text><Text bold>Warnings:</Text></Text>
               {validation.warnings.map((warning, idx) => (
-                <Text key={idx} color={theme.warning}> • {warning}</Text>
+                <Fragment key={idx}>
+                  <Text color={theme.warning}> • {warning}</Text>
+                </Fragment>
               ))}
             </Box>
           )}
@@ -2829,7 +2831,7 @@ function EditToolsStep({ agent, tools, setModeState, onAgentUpdated }: EditTools
         <Box flexDirection="column" marginTop={1}>
           {options.map((option, idx) => {
             const isSelected = idx === selectedIndex
-            const isContinue = option.isContinue
+            const isContinue = 'isContinue' in option && option.isContinue
             const isAdvancedToggle = (option as any).isAdvancedToggle
             const isSeparator = (option as any).isSeparator
             
@@ -3134,7 +3136,9 @@ function ViewAgent({ agent, tools, setModeState }: ViewAgentProps) {
           ) : (
             <Box flexDirection="column" paddingLeft={2}>
               {allowedTools.map(tool => (
-                <Text key={tool.name} color={theme.secondary}>• {tool.name}</Text>
+                <Fragment key={tool.name}>
+                  <Text color={theme.secondary}>• {tool.name}</Text>
+                </Fragment>
               ))}
             </Box>
           )}
@@ -3263,7 +3267,9 @@ function EditAgent({ agent, tools, setModeState, onAgentUpdated }: EditAgentProp
               {validation.warnings.length > 0 && (
                 <Box marginTop={1}>
                   {validation.warnings.map((warning, idx) => (
-                    <Text key={idx} color={theme.warning}>⚠ {warning}</Text>
+                    <Fragment key={idx}>
+                      <Text color={theme.warning}>⚠ {warning}</Text>
+                    </Fragment>
                   ))}
                 </Box>
               )}

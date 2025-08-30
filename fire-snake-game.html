@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>喷火蛇游戏</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            font-family: 'Courier New', monospace;
+            color: #fff;
+        }
+        
+        .game-container {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(255, 100, 100, 0.3);
+        }
+        
+        h1 {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(255, 100, 100, 0.5);
+        }
+        
+        #gameCanvas {
+            border: 3px solid #ff6b6b;
+            border-radius: 10px;
+            background: #000;
+            box-shadow: 0 0 20px rgba(255, 100, 100, 0.4);
+        }
+        
+        .controls {
+            margin: 15px 0;
+            color: #ffa500;
+        }
+        
+        .score {
+            font-size: 18px;
+            color: #00ff00;
+            margin: 10px 0;
+        }
+        
+        .game-over {
+            color: #ff4444;
+            font-size: 24px;
+            margin: 15px 0;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 16px;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🐍 喷火蛇游戏 🔥</h1>
+        <div class="controls">
+            使用方向键移动 | 空格键喷火 | R键重新开始
+        </div>
+        <div class="score" id="score">分数: 0</div>
+        <canvas id="gameCanvas" width="600" height="400"></canvas>
+        <div id="gameOver" class="game-over" style="display: none;">
+            游戏结束！按R键重新开始
+        </div>
+        <button onclick="startGame()">开始游戏</button>
+        <button onclick="togglePause()">暂停/继续</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const gameOverElement = document.getElementById('gameOver');
+
+        // 游戏状态
+        let gameRunning = false;
+        let gamePaused = false;
+        let score = 0;
+        
+        // 网格大小
+        const gridSize = 20;
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        
+        // 蛇的初始状态
+        let snake = [
+            {x: 10, y: 10}
+        ];
+        let direction = {x: 0, y: 0};
+        
+        // 食物
+        let food = generateFood();
+        
+        // 火焰系统
+        let flames = [];
+        let fireBreathing = false;
+        
+        // 粒子效果
+        let particles = [];
+
+        // 生成食物
+        function generateFood() {
+            return {
+                x: Math.floor(Math.random() * (canvasWidth / gridSize)),
+                y: Math.floor(Math.random() * (canvasHeight / gridSize))
+            };
+        }
+
+        // 火焰粒子类
+        class Flame {
+            constructor(x, y, angle, speed) {
+                this.x = x;
+                this.y = y;
+                this.vx = Math.cos(angle) * speed;
+                this.vy = Math.sin(angle) * speed;
+                this.life = 30;
+                this.maxLife = 30;
+                this.size = Math.random() * 8 + 4;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+                this.size *= 0.96;
+            }
+            
+            draw() {
+                if (this.life <= 0) return;
+                
+                const alpha = this.life / this.maxLife;
+                const hue = 60 - (1 - alpha) * 60; // 从黄色到红色
+                
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 粒子类（用于特效）
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 4;
+                this.vy = (Math.random() - 0.5) * 4;
+                this.life = 20;
+                this.color = color;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+            }
+            
+            draw() {
+                if (this.life <= 0) return;
+                
+                ctx.save();
+                ctx.globalAlpha = this.life / 20;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, 4, 4);
+                ctx.restore();
+            }
+        }
+
+        // 键盘事件处理
+        document.addEventListener('keydown', (e) => {
+            if (!gameRunning || gamePaused) {
+                if (e.code === 'KeyR') {
+                    startGame();
+                }
+                return;
+            }
+            
+            switch(e.code) {
+                case 'ArrowUp':
+                    if (direction.y === 0) direction = {x: 0, y: -1};
+                    break;
+                case 'ArrowDown':
+                    if (direction.y === 0) direction = {x: 0, y: 1};
+                    break;
+                case 'ArrowLeft':
+                    if (direction.x === 0) direction = {x: -1, y: 0};
+                    break;
+                case 'ArrowRight':
+                    if (direction.x === 0) direction = {x: 1, y: 0};
+                    break;
+                case 'Space':
+                    e.preventDefault();
+                    breatheFire();
+                    break;
+                case 'KeyR':
+                    startGame();
+                    break;
+            }
+        });
+
+        // 喷火功能
+        function breatheFire() {
+            if (!gameRunning || fireBreathing) return;
+            
+            fireBreathing = true;
+            setTimeout(() => fireBreathing = false, 200);
+            
+            const head = snake[0];
+            const headX = head.x * gridSize + gridSize / 2;
+            const headY = head.y * gridSize + gridSize / 2;
+            
+            // 计算喷火方向
+            let fireAngle = 0;
+            if (direction.x === 1) fireAngle = 0;
+            else if (direction.x === -1) fireAngle = Math.PI;
+            else if (direction.y === -1) fireAngle = -Math.PI / 2;
+            else if (direction.y === 1) fireAngle = Math.PI / 2;
+            
+            // 创建火焰粒子
+            for (let i = 0; i < 15; i++) {
+                const angle = fireAngle + (Math.random() - 0.5) * 0.8;
+                const speed = Math.random() * 8 + 4;
+                flames.push(new Flame(headX, headY, angle, speed));
+            }
+        }
+
+        // 检查火焰碰撞
+        function checkFlameCollisions() {
+            flames.forEach(flame => {
+                // 检查是否击中食物
+                const foodX = food.x * gridSize + gridSize / 2;
+                const foodY = food.y * gridSize + gridSize / 2;
+                const distance = Math.sqrt((flame.x - foodX) ** 2 + (flame.y - foodY) ** 2);
+                
+                if (distance < gridSize / 2 + flame.size) {
+                    // 火焰击中食物，获得额外分数
+                    score += 5;
+                    food = generateFood();
+                    
+                    // 添加特效
+                    for (let i = 0; i < 10; i++) {
+                        particles.push(new Particle(foodX, foodY, '#ffff00'));
+                    }
+                }
+            });
+        }
+
+        // 绘制蛇
+        function drawSnake() {
+            snake.forEach((segment, index) => {
+                ctx.fillStyle = index === 0 ? '#ff6b6b' : '#ff8e53'; // 头部更红
+                ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
+                
+                // 蛇头添加眼睛
+                if (index === 0) {
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(segment.x * gridSize + 4, segment.y * gridSize + 4, 4, 4);
+                    ctx.fillRect(segment.x * gridSize + 12, segment.y * gridSize + 4, 4, 4);
+                    
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(segment.x * gridSize + 5, segment.y * gridSize + 5, 2, 2);
+                    ctx.fillRect(segment.x * gridSize + 13, segment.y * gridSize + 5, 2, 2);
+                }
+            });
+        }
+
+        // 绘制食物
+        function drawFood() {
+            ctx.fillStyle = '#00ff00';
+            ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+            
+            // 食物闪烁效果
+            if (Math.floor(Date.now() / 200) % 2) {
+                ctx.fillStyle = '#88ff88';
+                ctx.fillRect(food.x * gridSize + 4, food.y * gridSize + 4, gridSize - 10, gridSize - 10);
+            }
+        }
+
+        // 移动蛇
+        function moveSnake() {
+            if (direction.x === 0 && direction.y === 0) return;
+            
+            const head = {
+                x: snake[0].x + direction.x,
+                y: snake[0].y + direction.y
+            };
+            
+            snake.unshift(head);
+            
+            // 检查是否吃到食物
+            if (head.x === food.x && head.y === food.y) {
+                score += 10;
+                food = generateFood();
+                
+                // 添加粒子特效
+                for (let i = 0; i < 8; i++) {
+                    particles.push(new Particle(
+                        head.x * gridSize + gridSize / 2, 
+                        head.y * gridSize + gridSize / 2, 
+                        '#00ff00'
+                    ));
+                }
+            } else {
+                snake.pop();
+            }
+        }
+
+        // 检查碰撞
+        function checkCollisions() {
+            const head = snake[0];
+            
+            // 墙壁碰撞
+            if (head.x < 0 || head.x >= canvasWidth / gridSize || 
+                head.y < 0 || head.y >= canvasHeight / gridSize) {
+                gameOver();
+                return;
+            }
+            
+            // 自身碰撞
+            for (let i = 1; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    gameOver();
+                    return;
+                }
+            }
+        }
+
+        // 游戏结束
+        function gameOver() {
+            gameRunning = false;
+            gameOverElement.style.display = 'block';
+        }
+
+        // 更新游戏
+        function update() {
+            if (!gameRunning || gamePaused) return;
+            
+            moveSnake();
+            checkCollisions();
+            checkFlameCollisions();
+            
+            // 更新火焰
+            flames = flames.filter(flame => {
+                flame.update();
+                return flame.life > 0;
+            });
+            
+            // 更新粒子
+            particles = particles.filter(particle => {
+                particle.update();
+                return particle.life > 0;
+            });
+            
+            scoreElement.textContent = `分数: ${score}`;
+        }
+
+        // 绘制游戏
+        function draw() {
+            // 清空画布
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            // 绘制网格（可选）
+            ctx.strokeStyle = '#111';
+            for (let i = 0; i < canvasWidth; i += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvasHeight);
+                ctx.stroke();
+            }
+            for (let i = 0; i < canvasHeight; i += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvasWidth, i);
+                ctx.stroke();
+            }
+            
+            drawFood();
+            drawSnake();
+            
+            // 绘制火焰
+            flames.forEach(flame => flame.draw());
+            
+            // 绘制粒子
+            particles.forEach(particle => particle.draw());
+        }
+
+        // 游戏主循环
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 开始游戏
+        function startGame() {
+            gameRunning = true;
+            gamePaused = false;
+            score = 0;
+            snake = [{x: 10, y: 10}];
+            direction = {x: 0, y: 0};
+            food = generateFood();
+            flames = [];
+            particles = [];
+            gameOverElement.style.display = 'none';
+        }
+
+        // 暂停/继续游戏
+        function togglePause() {
+            if (gameRunning) {
+                gamePaused = !gamePaused;
+            }
+        }
+
+        // 启动游戏循环
+        gameLoop();
+        
+        // 自动开始游戏
+        setTimeout(() => {
+            if (!gameRunning) {
+                startGame();
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

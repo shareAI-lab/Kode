@@ -6,6 +6,7 @@ import * as React from 'react'
 import { z } from 'zod'
 import { FileEditToolUpdatedMessage } from '../../components/FileEditToolUpdatedMessage'
 import { StructuredDiff } from '../../components/StructuredDiff'
+import { FallbackToolUseRejectedMessage } from '../../components/FallbackToolUseRejectedMessage'
 import { logEvent } from '../../services/statsig'
 import { Tool, ValidationResult } from '../../Tool'
 import { intersperse } from '../../utils/array'
@@ -76,10 +77,13 @@ export const FileEditTool = {
     )
   },
   renderToolUseRejectedMessage(
-    { file_path, old_string, new_string },
-    { columns, verbose },
+    { file_path, old_string, new_string }: any = {},
+    { columns, verbose }: any = {},
   ) {
     try {
+      if (!file_path) {
+        return <FallbackToolUseRejectedMessage />
+      }
       const { patch } = applyEdit(file_path, old_string, new_string)
       return (
         <Box flexDirection="column">

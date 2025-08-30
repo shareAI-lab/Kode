@@ -3,7 +3,7 @@ import {
   MessageParam,
   ToolUseBlock,
 } from '@anthropic-ai/sdk/resources/index.mjs'
-import { UUID } from 'crypto'
+import type { UUID } from './types/common'
 import type { Tool, ToolUseContext } from './Tool'
 import {
   messagePairValidForBinaryFeedback,
@@ -70,6 +70,9 @@ export type UserMessage = {
   options?: {
     isKodingRequest?: boolean
     kodingContext?: string
+    isCustomCommand?: boolean
+    commandName?: string
+    commandArgs?: string
   }
 }
 
@@ -196,8 +199,9 @@ export async function* query(
   if (reminders && messages.length > 0) {
     // Find the last user message
     for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i]?.type === 'user') {
-        const lastUserMessage = messages[i]
+      const msg = messages[i]
+      if (msg?.type === 'user') {
+        const lastUserMessage = msg as UserMessage
         messages[i] = {
           ...lastUserMessage,
           message: {
@@ -637,7 +641,7 @@ async function* checkPermissionsAndCallTool(
 
   // Call the tool
   try {
-    const generator = tool.call(normalizedInput as never, context, canUseTool)
+    const generator = tool.call(normalizedInput as never, context)
     for await (const result of generator) {
       switch (result.type) {
         case 'result':
@@ -649,13 +653,13 @@ async function* checkPermissionsAndCallTool(
             [
               {
                 type: 'tool_result',
-                content: result.resultForAssistant,
+                content: result.resultForAssistant || String(result.data),
                 tool_use_id: toolUseID,
               },
             ],
             {
               data: result.data,
-              resultForAssistant: result.resultForAssistant,
+              resultForAssistant: result.resultForAssistant || String(result.data),
             },
           )
           return
@@ -668,9 +672,10 @@ async function* checkPermissionsAndCallTool(
             toolUseID,
             siblingToolUseIDs,
             result.content,
-            result.normalizedMessages,
-            result.tools,
+            result.normalizedMessages || [],
+            result.tools || [],
           )
+          break
       }
     }
   } catch (error) {

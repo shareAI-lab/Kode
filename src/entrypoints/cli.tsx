@@ -1,6 +1,7 @@
 #!/usr/bin/env -S node --no-warnings=ExperimentalWarning --enable-source-maps
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+import { existsSync } from 'node:fs'
 import { initSentry } from '../services/sentry'
 import { PRODUCT_COMMAND, PRODUCT_NAME } from '../constants/product'
 initSentry() // Initialize Sentry as early as possible
@@ -9,14 +10,18 @@ initSentry() // Initialize Sentry as early as possible
 // Resolve yoga.wasm relative to this file when missing using ESM-friendly APIs
 try {
   if (!process.env.YOGA_WASM_PATH) {
-    const { existsSync: fsExistsSync } = require('fs')
     const __filename = fileURLToPath(import.meta.url)
     const __dirname = dirname(__filename)
     const devCandidate = join(__dirname, '../../yoga.wasm')
-    // Prefer dev path; wrapper already sets env for normal runs
-    process.env.YOGA_WASM_PATH = fsExistsSync(devCandidate)
-      ? devCandidate
-      : process.env.YOGA_WASM_PATH
+    const distCandidate = join(__dirname, './yoga.wasm')
+    const resolved = existsSync(distCandidate)
+      ? distCandidate
+      : existsSync(devCandidate)
+        ? devCandidate
+        : undefined
+    if (resolved) {
+      process.env.YOGA_WASM_PATH = resolved
+    }
   }
 } catch {}
 
@@ -28,9 +33,9 @@ Object.keys(dontcare)
 
 import React from 'react'
 import { ReadStream } from 'tty'
-import { openSync, existsSync } from 'fs'
-import { render, RenderOptions } from 'ink'
-import { REPL } from '../screens/REPL'
+import { openSync } from 'fs'
+// ink and REPL are imported lazily to avoid top-level awaits during module init
+import type { RenderOptions } from 'ink'
 import { addToHistory } from '../history'
 import { getContext, setContext, removeContext } from '../context'
 import { Command } from '@commander-js/extra-typings'
@@ -126,6 +131,7 @@ async function showSetupScreens(
     !config.hasCompletedOnboarding // always show onboarding at least once
   ) {
     await clearTerminal()
+    const { render } = await import('ink')
     await new Promise<void>(resolve => {
       render(
         <Onboarding
@@ -207,7 +213,14 @@ async function setup(cwd: string, safeMode?: boolean): Promise<void> {
   grantReadPermissionForOriginalDir()
   
   // Start watching agent configuration files for changes
-  const { startAgentWatcher, clearAgentCache } = await import('../utils/agentLoader')
+  // Try ESM-friendly path first (compiled dist), then fall back to extensionless (dev/tsx)
+  let agentLoader: any
+  try {
+    agentLoader = await import('../utils/agentLoader.js')
+  } catch {
+    agentLoader = await import('../utils/agentLoader')
+  }
+  const { startAgentWatcher, clearAgentCache } = agentLoader
   await startAgentWatcher(() => {
     // Cache is already cleared in the watcher, just log
     console.log('✅ Agent configurations hot-reloaded')
@@ -315,7 +328,7 @@ async function main() {
   let inputPrompt = ''
   let renderContext: RenderOptions | undefined = {
     exitOnCtrlC: false,
-    // @ts-expect-error - onFlicker not in RenderOptions interface  
+  
     onFlicker() {
       logEvent('tengu_flicker', {})
     },
@@ -451,8 +464,11 @@ ${commandList}`,
             return { version: null as string | null, commands: null as string[] | null }
           })()
 
-          render(
-            <REPL
+          {
+            const { render } = await import('ink')
+            const { REPL } = await import('../screens/REPL')
+            render(
+              <REPL
               commands={commands}
               debug={debug}
               initialPrompt={inputPrompt}
@@ -467,7 +483,8 @@ ${commandList}`,
               initialUpdateCommands={updateInfo.commands}
             />,
             renderContext,
-          )
+            )
+          }
         }
       },
     )
@@ -540,7 +557,7 @@ ${commandList}`,
     .action(async ({ cwd, global }) => {
       await setup(cwd, false)
       console.log(
-        JSON.stringify(listConfigForCLI(global ? (true as const) : (false as const)), null, 2),
+        JSON.stringify(global ? listConfigForCLI(true) : listConfigForCLI(false), null, 2),
       )
       process.exit(0)
     })
@@ -1039,9 +1056,7 @@ ${commandList}`,
           function ClaudeDesktopImport() {
             const { useState } = reactModule
             const [isFinished, setIsFinished] = useState(false)
-            const [importResults, setImportResults] = useState<
-              { name: string; success: boolean }[]
-            >([])
+            const [importResults, setImportResults] = useState([] as { name: string; success: boolean }[])
             const [isImporting, setIsImporting] = useState(false)
             const theme = getTheme()
 
@@ -1367,8 +1382,11 @@ ${commandList}`,
           }
           const fork = getNextAvailableLogForkNumber(date, forkNumber ?? 1, 0)
           const isDefaultModel = await isDefaultSlowAndCapableModel()
-          render(
-            <REPL
+          {
+            const { render } = await import('ink')
+            const { REPL } = await import('../screens/REPL')
+            render(
+              <REPL
               initialPrompt=""
               messageLogName={date}
               initialForkNumber={fork}
@@ -1382,7 +1400,8 @@ ${commandList}`,
               isDefaultModel={isDefaultModel}
             />,
             { exitOnCtrlC: false },
-          )
+            )
+          }
         } catch (error) {
           logError(`Failed to load conversation: ${error}`)
           process.exit(1)

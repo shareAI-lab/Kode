@@ -57,7 +57,7 @@ export const ArchitectTool = {
   needsPermissions() {
     return false
   },
-  async *call({ prompt, context }, toolUseContext, canUseTool) {
+  async *call({ prompt, context }, toolUseContext) {
     const content = context
       ? `<context>${context}</context>\n\n${prompt}`
       : prompt
@@ -67,9 +67,12 @@ export const ArchitectTool = {
     const messages: Message[] = [userMessage]
 
     // We only allow the file exploration tools to be used in the architect tool
-    const allowedTools = (toolUseContext.options.tools ?? []).filter(_ =>
+    const allowedTools = (toolUseContext.options?.tools ?? []).filter(_ =>
       FS_EXPLORATION_TOOLS.map(_ => _.name).includes(_.name),
     )
+
+    // Create a dummy canUseTool function since this tool controls its own tool usage
+    const canUseTool = async () => ({ result: true as const })
 
     const lastResponse = await lastX(
       query(
@@ -79,7 +82,17 @@ export const ArchitectTool = {
         canUseTool,
         {
           ...toolUseContext,
-          options: { ...toolUseContext.options, tools: allowedTools },
+          setToolJSX: () => {}, // Dummy function since ArchitectTool doesn't use UI
+          options: { 
+            commands: toolUseContext.options?.commands || [],
+            forkNumber: toolUseContext.options?.forkNumber || 0,
+            messageLogName: toolUseContext.options?.messageLogName || 'default',
+            verbose: toolUseContext.options?.verbose || false,
+            safeMode: toolUseContext.options?.safeMode || false,
+            maxThinkingTokens: toolUseContext.options?.maxThinkingTokens || 0,
+            ...toolUseContext.options, 
+            tools: allowedTools 
+          },
         },
       ),
     )
@@ -98,8 +111,8 @@ export const ArchitectTool = {
   async prompt() {
     return DESCRIPTION
   },
-  renderResultForAssistant(data) {
-    return data
+  renderResultForAssistant(data: TextBlock[]): string {
+    return data.map(block => block.text).join('\n')
   },
   renderToolUseMessage(input) {
     return Object.entries(input)

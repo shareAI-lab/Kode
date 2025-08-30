@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import React from 'react'
 import { Text } from 'ink'
-import { Tool, ToolUseContext } from '../../Tool'
+import { Tool, ToolUseContext, ExtendedToolUseContext } from '../../Tool'
 import { DESCRIPTION, PROMPT } from './prompt'
 import {
   StickerRequestForm,
@@ -38,8 +38,11 @@ export const StickerRequestTool: Tool = {
       resolveForm = success => resolve(success)
     })
 
-    context.setToolJSX?.({
-      jsx: (
+    // Check if setToolJSX is available (cast context if needed)
+    const extendedContext = context as ExtendedToolUseContext
+    if (extendedContext.setToolJSX) {
+      extendedContext.setToolJSX({
+        jsx: (
         <StickerRequestForm
           onSubmit={(formData: FormData) => {
             // Log successful completion with form data
@@ -48,18 +51,27 @@ export const StickerRequestTool: Tool = {
               has_optional_address: Boolean(formData.address2).toString(),
             })
             resolveForm(true)
-            context.setToolJSX?.(null) // Clear the JSX
+            if (extendedContext.setToolJSX) {
+              extendedContext.setToolJSX(null) // Clear the JSX
+            }
           }}
           onClose={() => {
             // Log form cancellation
             logEvent('sticker_request_form_cancelled', {})
             resolveForm(false)
-            context.setToolJSX?.(null) // Clear the JSX
+            if (extendedContext.setToolJSX) {
+              extendedContext.setToolJSX(null) // Clear the JSX
+            }
           }}
         />
-      ),
-      shouldHidePromptInput: true,
-    })
+        ),
+        shouldHidePromptInput: true,
+      })
+    } else {
+      // Fallback if setToolJSX is not available
+      console.log('Sticker form would be displayed here, but setToolJSX is not available')
+      resolveForm(false)
+    }
 
     // Wait for form completion and get status
     const success = await formComplete
@@ -82,12 +94,14 @@ export const StickerRequestTool: Tool = {
     return ''
   },
 
-  renderToolUseRejectedMessage: _input => (
-    <Text>
-      &nbsp;&nbsp;⎿ &nbsp;
-      <Text color={getTheme().error}>No (Sticker request cancelled)</Text>
-    </Text>
-  ),
+  renderToolUseRejectedMessage() {
+    return (
+      <Text>
+        &nbsp;&nbsp;⎿ &nbsp;
+        <Text color={getTheme().error}>No (Sticker request cancelled)</Text>
+      </Text>
+    )
+  },
 
   renderResultForAssistant: (content: string) => content,
 }

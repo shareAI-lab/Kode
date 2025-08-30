@@ -608,7 +608,13 @@ export async function getCompletionWithProfile(
         // 🔥 NEW: Parse error message to detect and handle specific API errors
         try {
           const errorData = await response.json()
-          const errorMessage = errorData?.error?.message || errorData?.message || `HTTP ${response.status}`
+          // Type guard for error data structure
+          const hasError = (data: unknown): data is { error?: { message?: string }; message?: string } => {
+            return typeof data === 'object' && data !== null
+          }
+          const errorMessage = hasError(errorData) 
+            ? (errorData.error?.message || errorData.message || `HTTP ${response.status}`)
+            : `HTTP ${response.status}`
           
           // Check if this is a parameter error that we can fix
           const isGPT5 = opts.model.startsWith('gpt-5')
@@ -740,7 +746,13 @@ export async function getCompletionWithProfile(
       // 🔥 NEW: Parse error message to detect and handle specific API errors
       try {
         const errorData = await response.json()
-        const errorMessage = errorData?.error?.message || errorData?.message || `HTTP ${response.status}`
+        // Type guard for error data structure
+        const hasError = (data: unknown): data is { error?: { message?: string }; message?: string } => {
+          return typeof data === 'object' && data !== null
+        }
+        const errorMessage = hasError(errorData) 
+          ? (errorData.error?.message || errorData.message || `HTTP ${response.status}`)
+          : `HTTP ${response.status}`
         
         // Check if this is a parameter error that we can fix
         const isGPT5 = opts.model.startsWith('gpt-5')
@@ -1285,16 +1297,25 @@ export async function fetchCustomModels(
 
     const data = await response.json()
 
+    // Type guards for different API response formats
+    const hasDataArray = (obj: unknown): obj is { data: unknown[] } => {
+      return typeof obj === 'object' && obj !== null && 'data' in obj && Array.isArray((obj as any).data)
+    }
+    
+    const hasModelsArray = (obj: unknown): obj is { models: unknown[] } => {
+      return typeof obj === 'object' && obj !== null && 'models' in obj && Array.isArray((obj as any).models)
+    }
+
     // Validate response format and extract models array
     let models = []
 
-    if (data && data.data && Array.isArray(data.data)) {
+    if (hasDataArray(data)) {
       // Standard OpenAI format: { data: [...] }
       models = data.data
     } else if (Array.isArray(data)) {
       // Direct array format
       models = data
-    } else if (data && data.models && Array.isArray(data.models)) {
+    } else if (hasModelsArray(data)) {
       // Alternative format: { models: [...] }
       models = data.models
     } else {

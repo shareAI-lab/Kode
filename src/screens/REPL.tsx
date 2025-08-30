@@ -523,7 +523,7 @@ export function REPL({
                 shouldShowDot={false}
               />
             ) : (
-              <MessageResponse>
+              <MessageResponse children={
                 <Message
                   message={_.content}
                   messages={_.normalizedMessages}
@@ -541,7 +541,7 @@ export function REPL({
                   shouldAnimate={false}
                   shouldShowDot={false}
                 />
-              </MessageResponse>
+              } />
             )
           ) : (
             <Message
@@ -618,15 +618,17 @@ export function REPL({
   const showingCostDialog = !isLoading && showCostDialog
 
   return (
-    <PermissionProvider isBypassPermissionsModeAvailable={!safeMode}>
-      {/* Update banner now renders inside Logo for stable placement */}
-      <ModeIndicator />
+    <PermissionProvider 
+      isBypassPermissionsModeAvailable={!safeMode}
+      children={
+        <React.Fragment>
+        {/* Update banner now renders inside Logo for stable placement */}
+        <ModeIndicator />
       <React.Fragment key={`static-messages-${forkNumber}`}>
         <Static
           items={messagesJSX.filter(_ => _.type === 'static')}
-        >
-          {_ => _.jsx}
-        </Static>
+          children={_ => ((_ as any).jsx)}
+        />
       </React.Fragment>
       {messagesJSX.filter(_ => _.type === 'transient').map(_ => _.jsx)}
       <Box
@@ -767,7 +769,9 @@ export function REPL({
       )}
       {/** Fix occasional rendering artifact */}
       <Newline />
-    </PermissionProvider>
+        </React.Fragment>
+      }
+    />
   )
 }
 

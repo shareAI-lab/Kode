@@ -1067,7 +1067,7 @@ export function useUnifiedCompletion({
   })
 
   // Handle navigation keys - simplified and unified  
-  useInput((_, key) => {
+  useInput((inputChar, key) => {
     // Enter key - confirm selection and end completion (always add space)
     if (key.return && state.isActive && state.suggestions.length > 0) {
       const selectedSuggestion = state.suggestions[state.selectedIndex]
@@ -1148,7 +1148,7 @@ export function useUnifiedCompletion({
     }
     
     // Space key - complete and potentially continue for directories
-    if (key.space && state.isActive && state.suggestions.length > 0) {
+    if (inputChar === ' ' && state.isActive && state.suggestions.length > 0) {
       const selectedSuggestion = state.suggestions[state.selectedIndex]
       const isDirectory = selectedSuggestion.value.endsWith('/')
       

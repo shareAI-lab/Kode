@@ -1,5 +1,7 @@
 import { Message } from '../query'
+import type { UUID } from '../types/common'
 import { countTokens } from './tokens'
+import crypto from 'crypto'
 
 export interface MessageRetentionStrategy {
   type:
@@ -144,6 +146,9 @@ export class MessageContextManager {
           },
         ],
       },
+      costUSD: 0,
+      durationMs: 0,
+      uuid: crypto.randomUUID() as UUID
     }
 
     const truncatedMessages = [summaryMessage, ...recentMessages]

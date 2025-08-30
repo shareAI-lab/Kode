@@ -72,7 +72,7 @@ export const TaskTool = {
       options: { safeMode = false, forkNumber, messageLogName, verbose },
       readFileTimestamps,
     },
-  ) {
+  ): AsyncGenerator<{ type: 'result'; data: TextBlock[]; resultForAssistant?: string }, void, unknown> {
     const startTime = Date.now()
     
     // Default to general-purpose if no subagent_type specified
@@ -95,7 +95,7 @@ export const TaskTool = {
         
         yield {
           type: 'result',
-          data: { error: helpMessage },
+          data: [{ type: 'text', text: helpMessage }] as TextBlock[],
           resultForAssistant: helpMessage,
         }
         return
@@ -135,14 +135,7 @@ export const TaskTool = {
       }
     }
 
-    // We yield an initial message immediately so the UI
-    // doesn't move around when messages start streaming back.
-    yield {
-      type: 'progress',
-      content: createAssistantMessage(chalk.dim(`[${agentType}] ${description}`)),
-      normalizedMessages: normalizeMessages(messages),
-      tools,
-    }
+    // Skip initial progress yield - only yield results for Tool interface
 
     const [taskPrompt, context, maxThinkingTokens] = await Promise.all([
       getAgentPrompt(),
@@ -194,6 +187,7 @@ export const TaskTool = {
         messageId: getLastAssistantMessageId(messages),
         agentId: taskId,
         readFileTimestamps,
+        setToolJSX: () => {}, // No-op implementation for TaskTool
       },
     )) {
       messages.push(message)
@@ -214,12 +208,7 @@ export const TaskTool = {
         if (content.type === 'text' && content.text && content.text !== INTERRUPT_MESSAGE) {
           // Show agent's reasoning/responses
           const preview = content.text.length > 200 ? content.text.substring(0, 200) + '...' : content.text
-          yield {
-            type: 'progress',
-            content: createAssistantMessage(`[${agentType}] ${preview}`),
-            normalizedMessages,
-            tools,
-          }
+          // Skip progress yield - only yield results for Tool interface
         } else if (content.type === 'tool_use') {
           toolUseCount++
           
@@ -250,12 +239,7 @@ export const TaskTool = {
               }
             }
             
-            yield {
-              type: 'progress',
-              content: modifiedMessage,
-              normalizedMessages,
-              tools,
-            }
+            // Skip progress yield - only yield results for Tool interface
           }
         }
       }
@@ -273,12 +257,7 @@ export const TaskTool = {
         _ => _.type === 'text' && _.text === INTERRUPT_MESSAGE,
       )
     ) {
-      yield {
-        type: 'progress',
-        content: lastMessage,
-        normalizedMessages,
-        tools,
-      }
+      // Skip progress yield - only yield final result
     } else {
       const result = [
         toolUseCount === 1 ? '1 tool use' : `${toolUseCount} tool uses`,
@@ -290,12 +269,7 @@ export const TaskTool = {
         ) + ' tokens',
         formatDuration(Date.now() - startTime),
       ]
-      yield {
-        type: 'progress',
-        content: createAssistantMessage(`[${agentType}] Completed (${result.join(' · ')})`),
-        normalizedMessages,
-        tools,
-      }
+      // Skip progress yield - only yield final result
     }
 
     // Output is an AssistantMessage, but since TaskTool is a tool, it needs
@@ -304,9 +278,7 @@ export const TaskTool = {
     yield {
       type: 'result',
       data,
-      normalizedMessages,
       resultForAssistant: this.renderResultForAssistant(data),
-      tools,
     }
   },
 

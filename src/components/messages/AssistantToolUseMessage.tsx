@@ -62,7 +62,7 @@ export function AssistantToolUseMessage({
     )
   }
 
-  const userFacingToolName = tool.userFacingName ? tool.userFacingName(param.input) : tool.name
+  const userFacingToolName = tool.userFacingName ? tool.userFacingName() : tool.name
   return (
     <Box
       flexDirection="row"
@@ -89,11 +89,10 @@ export function AssistantToolUseMessage({
             ))}
           {tool.name === 'Task' && param.input ? (
             <TaskToolMessage
-              agentType={(param.input as any).subagent_type || 'general-purpose'}
-              bold={!isQueued}
-            >
-              {userFacingToolName}
-            </TaskToolMessage>
+              agentType={String((param.input as any).subagent_type || 'general-purpose')}
+              bold={Boolean(!isQueued)}
+              children={String(userFacingToolName || '')}
+            />
           ) : (
             <Text color={color} bold={!isQueued}>
               {userFacingToolName}

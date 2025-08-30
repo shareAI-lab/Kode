@@ -64,18 +64,19 @@ export interface Tool<
     input: z.infer<TInput>,
     context?: ToolUseContext,
   ) => Promise<ValidationResult>
-  renderResultForAssistant: (output: TOutput) => string
+  renderResultForAssistant: (output: TOutput) => string | any[]
   renderToolUseMessage: (
     input: z.infer<TInput>,
     options: { verbose: boolean },
   ) => string
-  renderToolUseRejectedMessage: () => React.ReactElement
+  renderToolUseRejectedMessage?: (...args: any[]) => React.ReactElement
   renderToolResultMessage?: (output: TOutput) => React.ReactElement
   call: (
     input: z.infer<TInput>,
     context: ToolUseContext,
   ) => AsyncGenerator<
-    { type: 'result'; data: TOutput; resultForAssistant?: string },
+    | { type: 'result'; data: TOutput; resultForAssistant?: string }
+    | { type: 'progress'; content: any; normalizedMessages?: any[]; tools?: any[] },
     void,
     unknown
   >

@@ -30,7 +30,6 @@ export function useDoublePress(
     } else {
       onFirstPress?.()
       setPending(true)
-      // @ts-expect-error: Bun is overloading types here, but we're using the NodeJS runtime
       timeoutRef.current = setTimeout(
         () => setPending(false),
         DOUBLE_PRESS_TIMEOUT_MS,
