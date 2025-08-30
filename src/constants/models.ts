@@ -943,6 +943,7 @@ export default {
   'baidu-qianfan': [],
   siliconflow: [],
   ollama: [],
+  burncloud: [],
 }
 
 export const providers = {
@@ -953,6 +954,10 @@ export const providers = {
   anthropic: {
     name: 'Claude',
     baseURL: 'https://api.anthropic.com',
+  },
+  burncloud: {
+    name: 'BurnCloud (All models)',
+    baseURL: 'https://ai.burncloud.com/v1',
   },
   deepseek: {
     name: 'DeepSeek',
