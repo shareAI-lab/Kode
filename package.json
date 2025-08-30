@@ -1,6 +1,6 @@
 {
   "name": "@shareai-lab/kode",
-  "version": "1.1.14",
+  "version": "1.1.15",
   "bin": {
     "kode": "dist/index.js",
     "kwa": "dist/index.js",
