@@ -46,7 +46,7 @@ function fixRelativeImports(dir) {
     // Handle: dynamic import('...')
     text = text.replace(/(import\(\s*['"])(\.{1,2}\/[^'"\n]+)(['"]\s*\))/gm, (m, a, spec, c) => {
       if (/\.(js|json|node|mjs|cjs)$/.test(spec)) return m
-      return a + spec + '.js' + c + ')'
+      return a + spec + '.js' + c
     })
     writeFileSync(p, text)
   }

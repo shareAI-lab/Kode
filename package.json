@@ -1,15 +1,15 @@
 {
   "name": "@shareai-lab/kode",
-  "version": "1.1.15",
+  "version": "1.1.16",
   "bin": {
-    "kode": "dist/index.js",
-    "kwa": "dist/index.js",
-    "kd": "dist/index.js"
+    "kode": "cli.js",
+    "kwa": "cli.js",
+    "kd": "cli.js"
   },
   "engines": {
     "node": ">=20.18.1"
   },
-  "main": "dist/index.js",
+  "main": "cli.js",
   "author": "ShareAI-lab <ai-lab@foxmail.com>",
   "license": "Apache-2.0",
   "description": "AI-powered terminal assistant that understands your codebase, edits files, runs commands, and automates development workflows.",
@@ -25,7 +25,6 @@
     "cli.js",
     "yoga.wasm",
     "dist/**/*",
-    "src/**/*",
     "scripts/postinstall.js",
     ".npmrc"
   ],
@@ -33,7 +32,7 @@
     "dev": "bun run ./src/entrypoints/cli.tsx --verbose",
     "build": "node scripts/build.mjs",
     "clean": "rm -rf cli.js",
-    "prepublishOnly": "bun run build && node scripts/prepublish-check.js",
+    "prepublishOnly": "node scripts/build.mjs && node scripts/prepublish-check.js",
     "postinstall": "node scripts/postinstall.js || true",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json}\"",
@@ -41,100 +40,8 @@
     "lint:fix": "eslint . --ext .ts,.tsx,.js --fix",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky install"
-  },
-  "optionalDependencies": {
-    "@img/sharp-darwin-arm64": "^0.33.5",
-    "@img/sharp-linux-arm": "^0.33.5",
-    "@img/sharp-linux-x64": "^0.33.5",
-    "@img/sharp-win32-x64": "^0.33.5"
-  },
-  "dependencies": {
-    "@anthropic-ai/bedrock-sdk": "^0.12.6",
-    "@anthropic-ai/sdk": "^0.39.0",
-    "@anthropic-ai/vertex-sdk": "^0.7.0",
-    "@commander-js/extra-typings": "^13.1.0",
-    "@inkjs/ui": "^2.0.0",
-    "@modelcontextprotocol/sdk": "^1.15.1",
-    "@statsig/js-client": "^3.18.2",
-    "@types/lodash-es": "^4.17.12",
-    "@types/react": "^19.1.12",
-    "ansi-escapes": "^7.0.0",
-    "chalk": "^5.4.1",
-    "cli-highlight": "^2.1.11",
-    "cli-table3": "^0.6.5",
-    "commander": "^13.1.0",
-    "debug": "^4.4.1",
-    "diff": "^7.0.0",
-    "dotenv": "^16.6.1",
-    "env-paths": "^3.0.0",
-    "figures": "^6.1.0",
-    "glob": "^11.0.3",
-    "gray-matter": "^4.0.3",
-    "highlight.js": "^11.11.1",
-    "ink": "^6.2.3",
-    "ink-link": "^4.1.0",
-    "ink-select-input": "^6.2.0",
-    "ink-text-input": "^6.0.0",
-    "lodash-es": "^4.17.21",
-    "lru-cache": "^11.1.0",
-    "marked": "^15.0.12",
-    "nanoid": "^5.1.5",
-    "node-fetch": "^3.3.2",
-    "node-html-parser": "^7.0.1",
-    "openai": "^4.104.0",
-    "react": "^19.1.1",
-    "semver": "^7.7.2",
-    "sharp": "^0.34.3",
-    "shell-quote": "^1.8.3",
-    "spawn-rx": "^5.1.2",
-    "tsx": "^4.20.3",
-    "turndown": "^7.2.1",
-    "undici": "^7.11.0",
-    "wrap-ansi": "^9.0.0",
-    "zod": "^3.25.76",
-    "zod-to-json-schema": "^3.24.6"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "@types/jest": "^30.0.0",
-    "@types/node": "^24.1.0",
-    "@typescript-eslint/eslint-plugin": "^8.4.0",
-    "@typescript-eslint/parser": "^8.4.0",
-    "esbuild": "^0.23.0",
-    "eslint": "^9.9.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-react": "^7.36.1",
-    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
-    "husky": "^9.1.6",
-    "lint-staged": "^15.2.9",
-    "@types/sharp": "^0.32.0",
-    "bun-types": "latest",
-    "prettier": "^3.6.2",
-    "typescript": "^5.9.2"
-  },
-  "lint-staged": {
-    "*.{ts,tsx,js,jsx,json}": [
-      "prettier --write",
-      "eslint --fix"
-    ]
-  },
-  "overrides": {
-    "string-width": "^7.2.0",
-    "strip-ansi": "^7.1.0"
-  },
-  "directories": {
-    "doc": "docs",
-    "test": "test"
-  },
-  "keywords": [
-    "cli",
-    "ai",
-    "assistant",
-    "agent",
-    "kode",
-    "shareai",
-    "terminal",
-    "command-line"
-  ]
+    "prepare": "",
+    "publish:dev": "node scripts/publish-dev.js",
+    "publish:release": "node scripts/publish-release.js"
+  }
 }

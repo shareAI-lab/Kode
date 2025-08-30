@@ -181,9 +181,12 @@ async function showSetupScreens(
           grantReadPermissionForOriginalDir()
           resolve()
         }
-        render(<TrustDialog onDone={onDone} />, {
-          exitOnCtrlC: false,
-        })
+        ;(async () => {
+          const { render } = await import('ink')
+          render(<TrustDialog onDone={onDone} />, {
+            exitOnCtrlC: false,
+          })
+        })()
       })
     }
 
@@ -292,7 +295,10 @@ async function setup(cwd: string, safeMode?: boolean): Promise<void> {
   if (autoUpdaterStatus === 'not_configured') {
     logEvent('tengu_setup_auto_updater_not_configured', {})
     await new Promise<void>(resolve => {
-      render(<Doctor onDone={() => resolve()} />)
+      ;(async () => {
+        const { render } = await import('ink')
+        render(<Doctor onDone={() => resolve()} />)
+      })()
     })
   }
 }
@@ -1260,7 +1266,10 @@ ${commandList}`,
       logEvent('tengu_doctor_command', {})
 
       await new Promise<void>(resolve => {
-        render(<Doctor onDone={() => resolve()} doctorMode={true} />)
+        ;(async () => {
+          const { render } = await import('ink')
+          render(<Doctor onDone={() => resolve()} doctorMode={true} />)
+        })()
       })
       process.exit(0)
     })
@@ -1313,11 +1322,14 @@ ${commandList}`,
       await setup(cwd, false)
       logEvent('tengu_view_logs', { number: number?.toString() ?? '' })
       const context: { unmount?: () => void } = {}
-      const { unmount } = render(
-        <LogList context={context} type="messages" logNumber={number} />,
-        renderContextWithExitOnCtrlC,
-      )
-      context.unmount = unmount
+      ;(async () => {
+        const { render } = await import('ink')
+        const { unmount } = render(
+          <LogList context={context} type="messages" logNumber={number} />,
+          renderContextWithExitOnCtrlC,
+        )
+        context.unmount = unmount
+      })()
     })
 
   // claude resume
@@ -1409,17 +1421,20 @@ ${commandList}`,
       } else {
         // Show the conversation selector UI
         const context: { unmount?: () => void } = {}
-        const { unmount } = render(
-          <ResumeConversation
-            context={context}
-            commands={commands}
-            logs={logs}
-            tools={tools}
-            verbose={verbose}
-          />,
-          renderContextWithExitOnCtrlC,
-        )
-        context.unmount = unmount
+        ;(async () => {
+          const { render } = await import('ink')
+          const { unmount } = render(
+            <ResumeConversation
+              context={context}
+              commands={commands}
+              logs={logs}
+              tools={tools}
+              verbose={verbose}
+            />,
+            renderContextWithExitOnCtrlC,
+          )
+          context.unmount = unmount
+        })()
       }
     })
 
@@ -1439,11 +1454,14 @@ ${commandList}`,
       await setup(cwd, false)
       logEvent('tengu_view_errors', { number: number?.toString() ?? '' })
       const context: { unmount?: () => void } = {}
-      const { unmount } = render(
-        <LogList context={context} type="errors" logNumber={number} />,
-        renderContextWithExitOnCtrlC,
-      )
-      context.unmount = unmount
+      ;(async () => {
+        const { render } = await import('ink')
+        const { unmount } = render(
+          <LogList context={context} type="errors" logNumber={number} />,
+          renderContextWithExitOnCtrlC,
+        )
+        context.unmount = unmount
+      })()
     })
 
   // claude context (TODO: deprecate)
