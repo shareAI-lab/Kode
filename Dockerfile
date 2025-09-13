@@ -69,19 +69,19 @@ RUN npm install -g tsx
 WORKDIR /workspace
 
 # Copy built application from builder stage
-COPY --from=builder /app/cli.js /app/cli.js
+COPY --from=builder /app/dist /app/dist
 COPY --from=builder /app/package.json /app/package.json
 COPY --from=builder /app/node_modules /app/node_modules
 COPY --from=builder /app/src /app/src
 
 # Create the entrypoint script
-RUN cat << 'EOF' > /entrypoint.sh
-#!/bin/sh
+# RUN cat << 'EOF' > /entrypoint.sh
+# #!/bin/sh
  
-/root/.bun/bin/bun /app/cli.js -c /workspace "$@"
-EOF
+# /root/.bun/bin/bun /app/dist/entrypoints/cli.js -c /workspace "$@"
+# EOF
 
-RUN chmod +x /entrypoint.sh
+# RUN chmod +x /entrypoint.sh
 
 # Set the entrypoint
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/root/.bun/bin/bun", "/app/dist/entrypoints/cli.js", "-c", "/workspace"]

@@ -95,6 +95,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^24.1.0",
     "bun-types": "latest",
+    "esbuild": "^0.25.9",
     "prettier": "^3.6.2",
     "typescript": "^5.9.2"
   }
